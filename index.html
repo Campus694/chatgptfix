@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оплата</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1a1a1a;--card:#202020;--inner:#1b1b1b;--line:#3c3c3c;--text:#b4b4b4;--bright:#d0d0d0;--blue:#2ea8f0;--link:#2a8fd0;--r:22px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,a,input,select,.tile,.hit,.go{outline:none!important;-webkit-tap-highlight-color:transparent}
+button:focus,button:focus-visible,a:focus,a:focus-visible,input:focus,input:focus-visible,select:focus,select:focus-visible{outline:none!important}
+body{min-height:100vh;background:var(--bg);color:var(--text);font-family:Rubik,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;padding:6px 12px 40px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body.lock{overflow:hidden}
+.wrap{width:100%;max-width:420px;min-width:0;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+
+svg{display:block;flex-shrink:0;shape-rendering:geometricPrecision;overflow:visible}
+
+.logo{display:flex;align-items:center;justify-content:center;padding:0;width:100%;min-width:0;overflow:hidden}
+.logo img{display:block;height:84px;width:auto;max-width:100%;min-width:0;object-fit:contain}
+
+.sum{text-align:center;padding:2px 0 10px;color:#fff}
+.sum small{display:block;font-size:13px;font-weight:400;color:var(--text);margin-bottom:6px}
+.sum b{font-size:40px;font-weight:600;letter-spacing:-.02em}
+.sum b span+span{margin-left:4px;font-size:20px;font-weight:500;color:var(--text)}
+
+.block{background:var(--card);border-radius:var(--r);padding:16px 18px}
+.info{text-align:center;font-size:15px;line-height:1.2;background:var(--inner);border:1px dashed var(--line)}
+.info b{font-weight:500}
+
+.form{padding:0;overflow:hidden}
+.f{position:relative;padding:14px 18px 16px}
+.f + .f{border-top:1px solid var(--line)}
+.f.err::after{content:"";position:absolute;left:0;right:0;bottom:0;top:-1px;border:1.5px solid #e5484d;border-radius:0 0 var(--r) var(--r);pointer-events:none}
+.f label{display:block;font-size:14px;color:var(--text)}
+.f .val{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:19px;color:var(--bright);font-weight:600}
+.f .val .mlogo{display:block;flex-shrink:0;width:28px;height:28px;border-radius:50%;object-fit:cover}
+.f select{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;font-size:16px}
+.f select option{color:#000}
+.f .hit{position:absolute;inset:0;width:100%;height:100%;background:none;border:0;outline:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.chev{position:absolute;right:18px;top:50%;margin-top:-8px;width:16px;height:16px;fill:none;stroke:var(--bright);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.f input{display:block;width:100%;margin-top:4px;background:none;border:0;outline:0;color:var(--bright);font:inherit;font-size:19px}
+
+.go{width:100%;background:var(--blue);color:#07202f;border:0;border-radius:999px;padding:15px;font:inherit;font-size:17px;font-weight:600;cursor:pointer}
+.go:disabled{opacity:.45;cursor:default}
+
+.nav{display:flex;justify-content:center;gap:8px;margin-top:10px}
+.nav a,.nav button{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:999px;background:var(--card);color:var(--text);font-size:13px;font-weight:500;text-transform:uppercase;text-decoration:none;border:0;cursor:pointer;font-family:inherit}
+.nav svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav svg.flag{stroke:none}
+
+.legal{padding:4px 10px 0;text-align:center;font-size:13.5px;line-height:1.4}
+.legal a{color:var(--link);text-decoration:none}
+
+.shade{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(0px);backdrop-filter:blur(0px);opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.22,.8,.24,1),backdrop-filter .5s cubic-bezier(.22,.8,.24,1),-webkit-backdrop-filter .5s cubic-bezier(.22,.8,.24,1),visibility 0s linear .6s}
+.shade.open{opacity:1;visibility:visible;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition-delay:0s}
+
+.sheet{--sheet-bg:var(--bg);--tile:#21242b;position:fixed;left:0;right:0;bottom:0;z-index:51;height:70vh;height:70dvh;max-width:420px;margin:0 auto;display:flex;flex-direction:column;background:var(--sheet-bg);border-radius:var(--r) var(--r) 0 0;border:0;box-shadow:0 -18px 60px rgba(0,0,0,.55);transform:translate3d(0,102%,0);visibility:hidden;will-change:transform;transition:transform .65s cubic-bezier(.32,.72,0,1),visibility 0s linear .7s;padding-bottom:env(safe-area-inset-bottom)}
+.sheet.open{transform:translate3d(0,0,0);visibility:visible;transition-delay:0s}
+.sheet.drag{transition:none}
+
+.grab{flex-shrink:0;height:20px;cursor:grab;touch-action:none}
+
+.spin{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.sheet.open:not(.ready) .spin{opacity:1;transition-delay:.25s}
+.spin i{position:absolute;left:50%;top:0;width:2.6px;height:8px;margin-left:-1.3px;border-radius:2px;background:#c9ccd2;transform-origin:50% 15px;opacity:.15;animation:spin-fade 1s linear infinite}
+.spin i:nth-child(1){transform:rotate(0deg);animation-delay:-1s}
+.spin i:nth-child(2){transform:rotate(30deg);animation-delay:-.9167s}
+.spin i:nth-child(3){transform:rotate(60deg);animation-delay:-.8333s}
+.spin i:nth-child(4){transform:rotate(90deg);animation-delay:-.75s}
+.spin i:nth-child(5){transform:rotate(120deg);animation-delay:-.6667s}
+.spin i:nth-child(6){transform:rotate(150deg);animation-delay:-.5833s}
+.spin i:nth-child(7){transform:rotate(180deg);animation-delay:-.5s}
+.spin i:nth-child(8){transform:rotate(210deg);animation-delay:-.4167s}
+.spin i:nth-child(9){transform:rotate(240deg);animation-delay:-.3333s}
+.spin i:nth-child(10){transform:rotate(270deg);animation-delay:-.25s}
+.spin i:nth-child(11){transform:rotate(300deg);animation-delay:-.1667s}
+.spin i:nth-child(12){transform:rotate(330deg);animation-delay:-.0833s}
+@keyframes spin-fade{0%{opacity:1}100%{opacity:.15}}
+
+.pane{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:2px 17px 24px;scrollbar-width:thin;scrollbar-color:#2c3037 transparent}
+.sec + .sec{margin-top:22px}
+.sec h3{padding:12px 0 16px;font-size:27px;font-weight:600;line-height:1.2;color:#eceef2;letter-spacing:0;opacity:0;transform:translate3d(0,14px,0);transition:opacity .5s cubic-bezier(.22,.8,.24,1),transform .6s cubic-bezier(.32,.72,0,1)}
+.grid{display:grid;grid-template-columns:1fr;gap:10px}
+.tile{position:relative;display:flex;align-items:center;gap:14px;width:100%;height:72px;padding:0 16px;text-align:left;border:0;border-radius:19px;background:var(--tile);cursor:default;font:inherit;-webkit-tap-highlight-color:transparent;opacity:0;transform:translate3d(0,26px,0) scale(.97);transition:opacity .5s cubic-bezier(.22,.8,.24,1),transform .6s cubic-bezier(.32,.72,0,1),box-shadow .35s ease,background .35s ease}
+.tile[data-v]{cursor:pointer}
+
+.ico{position:relative;flex-shrink:0;width:48px;height:48px;pointer-events:none}
+.ico .pic{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none}
+.ico .net{position:absolute;right:-5px;bottom:-6px;width:22px;height:22px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--ring,var(--tile));pointer-events:none}
+
+.tile .lbl{min-width:0;display:flex;flex-direction:column;gap:3px;text-align:left;pointer-events:none}
+.tile .lbl b{display:block;font-size:19px;font-weight:600;line-height:1.15;color:#eceef2}
+.tile .lbl small{display:block;font-size:14px;font-weight:500;line-height:1.25;color:#eceef2}
+
+.sheet.ready .sec h3{opacity:1;transform:none;transition-delay:.02s}
+.sheet.ready .sec + .sec h3{transition-delay:.14s}
+.sheet.ready .tile{opacity:1;transform:none;transition-delay:calc(.06s + var(--i) * .05s),calc(.06s + var(--i) * .05s),0s,0s}
+.tile:active{transform:scale(.985)!important;transition-delay:0s!important;transition-duration:.15s}
+.sheet.ready .tile.off,.tile.off{opacity:.6;filter:grayscale(.6);cursor:pointer}
+.tile.on{--ring:#1c2630;box-shadow:inset 0 0 0 1.5px var(--blue);background:#1c2630}
+
+.offtoast{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:70;width:calc(100% - 24px);max-width:396px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px 12px 12px;border-radius:20px;background:var(--card);box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;visibility:hidden;pointer-events:none;transform:translate3d(0,10px,0) scale(.98);transition:opacity .3s cubic-bezier(.22,.8,.24,1),transform .45s cubic-bezier(.32,.72,0,1),visibility 0s linear .45s}
+.offtoast.show{opacity:1;visibility:visible;transform:translate3d(0,0,0) scale(1);transition-delay:0s}
+.offtoast .oi{flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+.offtoast .oi svg{width:28px;height:28px}
+.offtoast .ot{min-width:0;display:flex;flex-direction:column;gap:3px}
+.offtoast .ot b{display:block;font-size:15px;font-weight:600;line-height:1.2;color:#f4f5f7}
+.offtoast .ot span{display:block;font-size:13px;font-weight:400;line-height:1.3;color:#fff}
+
+.psheet{position:fixed;left:0;right:0;bottom:0;z-index:52;height:22vh;height:22dvh;min-height:140px;max-width:420px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--bg);border-radius:var(--r) var(--r) 0 0;box-shadow:0 -18px 60px rgba(0,0,0,.55);transform:translate3d(0,102%,0);visibility:hidden;will-change:transform;transition:transform .65s cubic-bezier(.32,.72,0,1),visibility 0s linear .7s;padding-bottom:env(safe-area-inset-bottom)}
+.psheet.open{transform:translate3d(0,0,0);visibility:visible;transition-delay:0s}
+.dots{display:flex;align-items:center;gap:8px;height:28px}
+.dots i{display:block;width:9px;height:9px;border-radius:50%;background:#c9ccd2;opacity:.55;will-change:transform,opacity;animation:hop 1.2s cubic-bezier(.45,0,.55,1) infinite}
+.dots i:nth-child(2){animation-delay:.16s}
+.dots i:nth-child(3){animation-delay:.32s}
+@keyframes hop{0%,60%,100%{transform:translate3d(0,0,0);opacity:.55}30%{transform:translate3d(0,-8px,0);opacity:1}}
+.ptext{font-size:15px;font-weight:500;color:var(--text);letter-spacing:.01em}
+
+.wsheet{position:fixed;left:0;right:0;bottom:0;z-index:51;height:40vh;height:40dvh;min-height:270px;max-width:420px;margin:0 auto;display:flex;flex-direction:column;background:var(--bg);border-radius:var(--r) var(--r) 0 0;box-shadow:0 -18px 60px rgba(0,0,0,.55);transform:translate3d(0,102%,0);visibility:hidden;will-change:transform;transition:transform .65s cubic-bezier(.32,.72,0,1),visibility 0s linear .7s;padding-bottom:env(safe-area-inset-bottom)}
+.wsheet.open{transform:translate3d(0,0,0);visibility:visible;transition-delay:0s}
+.wload{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.wring{width:56px;height:56px;animation:wring-spin .9s linear infinite;will-change:transform}
+.wring circle{fill:none;stroke-width:6}
+.wring .tr{stroke:#262626}
+.wring .ar{stroke:var(--blue);stroke-dasharray:36 102.23}
+@keyframes wring-spin{to{transform:rotate(360deg)}}
+.wbtn{flex-shrink:0;padding:0 17px 18px}
+#walGo{display:flex;align-items:center;justify-content:center;gap:8px}
+#walGo svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#walGo:active{transform:scale(.985);transition:transform .15s}
+
+.rsheet{--tile:#21242b;position:fixed;left:0;right:0;bottom:0;z-index:51;height:86vh;height:86dvh;max-width:420px;margin:0 auto;display:flex;flex-direction:column;background:var(--bg);border-radius:var(--r) var(--r) 0 0;box-shadow:0 -18px 60px rgba(0,0,0,.55);transform:translate3d(0,102%,0);visibility:hidden;will-change:transform;transition:transform .65s cubic-bezier(.32,.72,0,1),visibility 0s linear .7s;padding-bottom:env(safe-area-inset-bottom)}
+.rsheet.open{transform:translate3d(0,0,0);visibility:visible;transition-delay:0s}
+.rsheet.load .spin{opacity:1}
+
+.rbody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:14px;padding:24px 17px 18px;opacity:0;pointer-events:none;transition:opacity .35s ease;scrollbar-width:thin;scrollbar-color:#2c3037 transparent}
+.rsheet.show .rbody{opacity:1;pointer-events:auto}
+
+.qrcard{flex-shrink:0;align-self:center;width:min(60vw,236px);padding:13px;background:#fff;border-radius:24px;box-shadow:0 0 0 6px #232323,0 14px 40px rgba(0,0,0,.45)}
+.qr{width:100%;aspect-ratio:1/1;background:#fff;border-radius:12px;overflow:hidden}
+.qr img,.qr canvas,.qr svg{display:block;width:100%;height:100%}
+.qrcap{flex-shrink:0;text-align:center;font-size:13.5px;line-height:1.35;color:var(--text);padding:0 12px}
+
+.rcard{flex-shrink:0;width:100%;background:var(--tile);border-radius:19px;overflow:hidden;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+.rb{display:flex;align-items:center;gap:12px;padding:13px 10px 13px 16px}
+.rb + .rb{border-top:1px solid #2e323b}
+.rb .rt{flex:1;min-width:0}
+.rb .rl{display:block;font-size:12px;line-height:1.2;color:var(--text)}
+.rb .rv{display:block;margin-top:5px;font-size:15px;line-height:1.35;font-weight:500;color:#eceef2;word-break:break-all}
+.rb .rv.big{font-size:22px;font-weight:600;line-height:1.2}
+.cp{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;border-radius:50%;background:#2a2e37;color:var(--bright);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .2s ease,color .2s ease,transform .15s ease}
+.cp:active{transform:scale(.92)}
+.cp svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cp .ok{display:none}
+.cp.done{background:#1c2630;color:var(--blue)}
+.cp.done .cc{display:none}
+.cp.done .ok{display:block}
+
+.rbtns{display:flex;flex-direction:column;gap:10px;margin-top:auto;padding-top:6px}
+.go.alt{background:var(--tile);color:var(--bright)}
+.rbtns .go:active{transform:scale(.985);transition:transform .15s}
+
+.memowrap{flex-shrink:0;display:flex;flex-direction:column;gap:10px}
+.memonote{padding:0 6px;text-align:center;font-size:13.5px;line-height:1.35;font-weight:500;color:#f0a35e}
+
+.rsheet.tight .rbody{gap:8px;padding:14px 17px 12px}
+.rsheet.tight .qrcard{width:min(38vw,140px);padding:9px;border-radius:18px;box-shadow:0 0 0 4px #232323,0 10px 28px rgba(0,0,0,.45)}
+.rsheet.tight .qr{border-radius:9px}
+.rsheet.tight .qrcap{font-size:12px;line-height:1.25;padding:0 8px}
+.rsheet.tight .rcard{border-radius:16px}
+.rsheet.tight .rb{padding:8px 8px 8px 14px;gap:10px}
+.rsheet.tight .rb .rl{font-size:11px}
+.rsheet.tight .rb .rv{margin-top:3px;font-size:13px;line-height:1.3}
+.rsheet.tight .rb .rv.big{font-size:18px;line-height:1.15}
+.rsheet.tight .cp{width:34px;height:34px}
+.rsheet.tight .cp svg{width:16px;height:16px}
+.rsheet.tight .memowrap{gap:6px}
+.rsheet.tight .memonote{font-size:12px;line-height:1.25;padding:0 4px}
+.rsheet.tight .rbtns{gap:8px;padding-top:2px}
+.rsheet.tight .go{padding:12px;font-size:16px}
+
+.rsheet.gram .rbody{gap:11px;padding:20px 17px 26px}
+.rsheet.gram .qrcap{line-height:1.25}
+.rsheet.gram .rb{padding:11px 10px 11px 16px}
+.rsheet.gram .rb .rv{margin-top:3px}
+.rsheet.gram .memowrap{gap:7px}
+.rsheet.gram .memonote{line-height:1.25}
+.rsheet.gram .rbtns{padding-top:2px}
+
+.sheet.csel{z-index:52;height:66vh;height:66dvh}
+.sec h3 small{display:block;margin-top:5px;font-size:15px;font-weight:500;line-height:1.25;color:var(--text)}
+.mcoin{margin-left:-4px;font-weight:500;color:var(--text)}
+
+.csheet{position:fixed;left:0;right:0;bottom:0;z-index:53;height:22vh;height:22dvh;min-height:140px;max-width:420px;margin:0 auto;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:20px;padding:0 18px;background:var(--bg);border-radius:var(--r) var(--r) 0 0;box-shadow:0 -18px 60px rgba(0,0,0,.55);transform:translate3d(0,102%,0);visibility:hidden;will-change:transform;transition:transform .65s cubic-bezier(.32,.72,0,1),visibility 0s linear .7s;padding-bottom:env(safe-area-inset-bottom)}
+.csheet.open{transform:translate3d(0,0,0);visibility:visible;transition-delay:0s}
+.ctitle{text-align:center;font-size:20px;font-weight:600;line-height:1.2;color:#eceef2}
+.cbtns{display:flex;gap:10px}
+.cbtns button{flex:1;height:48px;border:0;border-radius:999px;color:#fff;font:inherit;font-size:16px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.cbtns .no{background:#ff2d20}
+.cbtns .back{background:#fff;color:#111}
+.cbtns button:active{transform:scale(.97);transition:transform .15s}
+
+.ssheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  height:auto;max-height:94svh;max-width:420px;margin:0 auto;
+  background:#101318;border-radius:25px 25px 0 0;
+  padding:15px 16px 12px;overflow-y:auto;
+  box-shadow:0 -18px 60px rgba(0,0,0,.55);
+  transform:translate3d(0,102%,0);visibility:hidden;will-change:transform;
+  transition:transform .65s cubic-bezier(.32,.72,0,1),visibility 0s linear .7s;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom));
+}
+.ssheet.open{transform:translate3d(0,0,0);visibility:visible;transition-delay:0s}
+
+.ssheet .banner{
+  width:100%;
+  aspect-ratio: 1200 / 450;
+  margin-bottom:15px;
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+}
+.ssheet .banner-img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.ssheet .banner-fallback{
+  width:100%;
+  height:100%;
+  background:#1a1f26;
+  display:none;
+  position:absolute;
+  inset:0;
+}
+
+.ssheet h1{margin:0 0 10px;font-size:25px;line-height:1.05;font-weight:750;letter-spacing:-.6px;color:#f3f4f6}
+.ssheet .description{margin:0 0 17px;color:#9ca5b4;font-size:15px;line-height:1.38;font-weight:400}
+.ssheet .section-title{margin:0 0 11px;font-size:18px;line-height:1.1;font-weight:750;color:#f2f3f5}
+
+.ssheet .card{
+  height:60px;width:100%;margin-bottom:9px;
+  border-radius:16px;background:#171b21;
+  display:flex;align-items:center;
+  padding:0 45px 0 13px;position:relative;
+  cursor:pointer;text-decoration:none;color:inherit;
+  transition:background .13s ease;
+  -webkit-user-select:none;user-select:none;
+}
+.ssheet .card:active{background:#1d2330}
+.ssheet .card-logo{width:38px;height:38px;margin-right:13px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ssheet .logo-chat{background:linear-gradient(160deg,#FF9A4D,#FF6B2C)}
+.ssheet .logo-tg{background:linear-gradient(160deg,#4FC3F7,#2AABEE)}
+.ssheet .logo-mail{background:#ffffff}
+.ssheet .card-title{font-size:15px;font-weight:650;color:#f1f2f4;line-height:1.1}
+.ssheet .arrow{position:absolute;right:21px;top:50%;width:13px;height:13px;border-right:2.5px solid #f3f4f6;border-top:2.5px solid #f3f4f6;transform:translateY(-50%) rotate(45deg)}
+
+.ssheet .mail{height:64px;margin-bottom:0;padding:0 14px 0 13px}
+.ssheet .mail-title{font-size:15px;font-weight:650;color:#f1f2f4}
+.ssheet .mail-address{font-size:12.5px;color:#8d97a7;margin-top:4px}
+.ssheet .mail-icon{
+  margin-left:auto;flex-shrink:0;
+  width:34px;height:34px;border-radius:10px;
+  background:#29323d;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .13s ease;
+}
+.ssheet .mail-icon:active{background:#333e4c}
+.ssheet .icon-check{display:none}
+.ssheet .mail-icon.copied .icon-copy{display:none}
+.ssheet .mail-icon.copied .icon-check{display:block}
+
+@media(max-height:700px){
+  .ssheet{height:auto;max-height:96svh;padding-top:12px}
+  .ssheet .banner{margin-bottom:11px}
+  .ssheet h1{font-size:22px;margin-bottom:8px}
+  .ssheet .description{font-size:13px;margin-bottom:12px}
+  .ssheet .section-title{font-size:17px;margin-bottom:9px}
+  .ssheet .card{height:52px;margin-bottom:7px}
+  .ssheet .mail{height:56px}
+  .ssheet .card-logo{width:34px;height:34px;border-radius:10px}
+}
+
+.ksheet{z-index:54;height:auto;min-height:0;gap:12px;padding:24px 18px calc(18px + env(safe-area-inset-bottom))}
+.ksheet .go{margin-top:6px}
+.ksheet .ptext{font-size:18px;font-weight:600;color:#eceef2}
+.kico{width:46px;height:46px;fill:none;stroke:var(--blue);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+@media (hover:hover){
+  .tile[data-v]:hover{--ring:#262a32;background:#262a32}
+  .tile.on:hover{--ring:#1c2630;background:#1c2630}
+  .tile.off:hover{--ring:var(--tile);background:var(--tile)}
+}
+@media (prefers-reduced-motion:reduce){
+  .shade,.sheet,.psheet,.wsheet,.rsheet,.csheet,.ssheet,.tile,.sec h3,.spin,.rbody,.cp,.offtoast{transition-duration:.01s!important;transition-delay:0s!important}
+}
+
+/* INVOICE-SKELETON: анимация загрузки блоков суммы и описания */
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+body.inv-loading #amt,body.inv-loading #cur,body.inv-loading #desc{display:inline-block;vertical-align:middle;color:transparent!important;-webkit-text-fill-color:transparent;border-radius:10px;background:linear-gradient(90deg,#262626 25%,#363636 50%,#262626 75%);background-size:200% 100%;animation:skel 1.3s ease-in-out infinite;user-select:none}
+body.inv-loading #amt{min-width:104px;height:44px}
+body.inv-loading #cur{min-width:54px;height:24px;margin-left:4px}
+body.inv-loading #desc{min-width:170px;height:20px}
+body.inv-lock .form,body.inv-lock #go{pointer-events:none}
+body.inv-lock .form,body.inv-lock #go{opacity:.55}
+body.inv-err #desc{color:#e5484d}
+</style>
+</head>
+<body class="inv-loading inv-lock">
+<div class="wrap">
+  <div class="logo">
+    <img src="plata.png" alt="">
+  </div>
+
+  <div class="sum"><small>Сумма к оплате</small><b><span id="amt">5</span> <span id="cur">RUB</span></b></div>
+
+  <div class="block info"><b>Games:</b>&nbsp; <span id="desc">Пополнение по инвойсу - 0</span></div>
+
+  <div class="block form">
+    <div class="f">
+      <label>Способ оплаты</label>
+      <span class="val" id="mval">Не выбран</span>
+      <svg class="chev" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg>
+      <select id="method" tabindex="-1" aria-hidden="true">
+        <option value="" selected disabled>Не выбран</option>
+        <option>CryptoBot</option>
+        <option>xRocket</option>
+        <option>USDT TRC20</option>
+        <option>GRAM</option>
+        <option>BTC</option>
+        <option>ETH</option>
+        <option>BNB</option>
+        <option>TRX</option>
+      </select>
+      <button type="button" class="hit" id="open" aria-label="Выбрать способ оплаты" aria-haspopup="dialog"></button>
+    </div>
+    <div class="f" id="emailBox">
+      <label for="email">Ваш e-mail</label>
+      <input id="email" type="email" autocomplete="email" placeholder="you@mail.com">
+    </div>
+  </div>
+
+  <button class="go" id="go" disabled>Продолжить</button>
+
+  <nav class="nav">
+    <a href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg>Сайт
+    </a>
+    <button type="button" id="openSupport">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0116 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>Поддержка
+    </button>
+    <a href="#">
+      <svg class="flag" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><defs><clipPath id="fc"><circle cx="8" cy="8" r="8"/></clipPath></defs><g clip-path="url(#fc)"><rect width="16" height="5.4" fill="#ffffff"/><rect y="5.3" width="16" height="5.4" fill="#1c57a5"/><rect y="10.6" width="16" height="5.4" fill="#d52b1e"/></g></svg>RU
+    </a>
+  </nav>
+
+  <p class="legal">Продолжая оплату, вы автоматически принимаете условия <a href="#">публичной оферты</a> и <a href="#">политики конфиденциальности</a>.</p>
+</div>
+
+<div class="shade" id="shade"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Способ оплаты">
+  <div class="grab" id="grab"></div>
+  <div class="spin" role="status" aria-label="Загрузка"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="pane" id="pane">
+    <section class="sec">
+      <h3>Кошельки</h3>
+      <div class="grid">
+        <button type="button" class="tile" data-v="CryptoBot" aria-label="CryptoBot" style="--i:0"><span class="ico"><img class="pic" src="cryptobot.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>CryptoBot</b></span></button>
+        <button type="button" class="tile" data-v="xRocket" aria-label="xRocket" style="--i:1"><span class="ico"><img class="pic" src="xrocket.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>xRocket</b></span></button>
+      </div>
+    </section>
+    <section class="sec">
+      <h3>Криптовалюта</h3>
+      <div class="grid">
+        <button type="button" class="tile" data-v="USDT TRC20" aria-label="USDT TRC20" style="--i:4"><span class="ico"><img class="pic" src="usdt-trc20.png" alt="" onerror="this.style.display='none'"><img class="net" src="net-tron.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>USDT</b><small>(TRC20)</small></span></button>
+        <button type="button" class="tile" data-v="GRAM" aria-label="GRAM" style="--i:5"><span class="ico"><img class="pic" src="ton.png" alt="" onerror="this.style.display='none'"><img class="net" src="net-ton.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>GRAM</b><small>(TON)</small></span></button>
+        <button type="button" class="tile" data-v="BTC" aria-label="BTC" style="--i:6"><span class="ico"><img class="pic" src="btc.png" alt="" onerror="this.style.display='none'"><img class="net" src="net-btc.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>BTC</b><small>(Bitcoin)</small></span></button>
+        <button type="button" class="tile" data-v="ETH" aria-label="ETH" style="--i:8"><span class="ico"><img class="pic" src="eth.png" alt="" onerror="this.style.display='none'"><img class="net" src="net-eth.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>ETH</b><small>(Ethereum)</small></span></button>
+        <button type="button" class="tile" data-v="BNB" aria-label="BNB" style="--i:9"><span class="ico"><img class="pic" src="bnb.png" alt="" onerror="this.style.display='none'"><img class="net" src="net-bnb.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>BNB</b><small>(BNB Chain)</small></span></button>
+        <button type="button" class="tile" data-v="TRX" aria-label="TRX" style="--i:10"><span class="ico"><img class="pic" src="net-tron.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>TRX</b><small>(Tron)</small></span></button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="psheet" id="psheet" role="status" aria-label="Создание инвойса">
+  <div class="dots"><i></i><i></i><i></i></div>
+  <div class="ptext" id="ptext">Создание инвойса...</div>
+</div>
+
+<div class="wsheet" id="wsheet" role="dialog" aria-modal="true" aria-label="Оплата через кошелёк">
+  <div class="wload" role="status" aria-label="Загрузка">
+    <svg class="wring" viewBox="0 0 50 50" aria-hidden="true"><circle class="tr" cx="25" cy="25" r="22"/><circle class="ar" cx="25" cy="25" r="22"/></svg>
+  </div>
+  <div class="wbtn">
+    <button type="button" class="go" id="walGo"><span>Перейти к оплате</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg></button>
+  </div>
+</div>
+
+<div class="rsheet" id="rsheet" role="dialog" aria-modal="true" aria-label="Оплата">
+  <div class="spin" role="status" aria-label="Загрузка"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="rbody">
+    <div class="qrcard"><div class="qr" id="qr"></div></div>
+    <p class="qrcap" id="qrcap">Отсканируйте QR-код в приложении кошелька или скопируйте адрес</p>
+    <div class="rcard">
+      <div class="rb">
+        <div class="rt"><span class="rl">Сумма</span><span class="rv big" id="rAmt">—</span></div>
+        <button type="button" class="cp" id="cpAmt" aria-label="Скопировать сумму"><svg class="cc" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 017.5 4H15"/></svg><svg class="ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+      </div>
+      <div class="rb">
+        <div class="rt"><span class="rl" id="rAddrLbl">Адрес</span><span class="rv" id="rAddr">—</span></div>
+        <button type="button" class="cp" id="cpAddr" aria-label="Скопировать адрес"><svg class="cc" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 017.5 4H15"/></svg><svg class="ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+      </div>
+    </div>
+    <div class="memowrap" id="memoWrap" style="display:none">
+    <p class="memonote">Указание комментария (Memo) перед платежом обязательно, иначе платёж будет утерян</p>
+    <div class="rcard" id="memoCard">
+      <div class="rb">
+        <div class="rt"><span class="rl">Memo</span><span class="rv" id="rMemo">—</span></div>
+        <button type="button" class="cp" id="cpMemo" aria-label="Скопировать Memo"><svg class="cc" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 017.5 4H15"/></svg><svg class="ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+      </div>
+    </div>
+    </div>
+    <div class="rbtns">
+      <button type="button" class="go alt" id="payCheck">Проверить оплату</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet csel" id="csel" role="dialog" aria-modal="true" aria-label="Валюта оплаты">
+  <div class="grab" id="cgrab"></div>
+  <div class="pane" id="cpane">
+    <section class="sec">
+      <h3>Валюта оплаты<small id="cwallet">CryptoBot</small></h3>
+      <div class="grid">
+        <button type="button" class="tile" data-c="USDT" aria-label="USDT" style="--i:0"><span class="ico"><img class="pic" src="usdt-trc20.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>USDT</b><small>(Tether)</small></span></button>
+        <button type="button" class="tile" data-c="GRAM" aria-label="GRAM" style="--i:1"><span class="ico"><img class="pic" src="ton.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>GRAM</b><small>(TON)</small></span></button>
+        <button type="button" class="tile" data-c="BTC" aria-label="BTC" style="--i:2"><span class="ico"><img class="pic" src="btc.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>BTC</b><small>(Bitcoin)</small></span></button>
+        <button type="button" class="tile" data-c="ETH" aria-label="ETH" style="--i:3"><span class="ico"><img class="pic" src="eth.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>ETH</b><small>(Ethereum)</small></span></button>
+        <button type="button" class="tile" data-c="BNB" aria-label="BNB" style="--i:4"><span class="ico"><img class="pic" src="bnb.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>BNB</b><small>(BNB Chain)</small></span></button>
+        <button type="button" class="tile" data-c="TRX" aria-label="TRX" style="--i:5"><span class="ico"><img class="pic" src="net-tron.png" alt="" onerror="this.style.display='none'"></span><span class="lbl"><b>TRX</b><small>(Tron)</small></span></button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="csheet" id="csheet" role="dialog" aria-modal="true" aria-label="Отменить транзакцию?">
+  <div class="ctitle">Отменить транзакцию?</div>
+  <div class="cbtns">
+    <button type="button" class="no" id="cancelYes">Отменить</button>
+    <button type="button" class="back" id="cancelNo">Отмена</button>
+  </div>
+</div>
+
+<div class="psheet ksheet" id="ksheet" role="dialog" aria-modal="true" aria-label="Оплата получена">
+  <svg class="kico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+  <div class="ptext">Оплата получена</div>
+  <!-- DBLOG:START (временный лог записи в БД, удалить вместе с блоком в скрипте) -->
+  <div class="ptext" id="dbLog" style="font-size:14px;font-weight:500;text-align:center;padding:0 12px"></div>
+  <!-- DBLOG:END -->
+  <button type="button" class="go" id="paidClose">Готово</button>
+</div>
+
+<div class="ssheet" id="ssheet" role="dialog" aria-modal="true" aria-label="Служба поддержки">
+  <div class="banner">
+    <img
+      class="banner-img"
+      src="ban.png"
+      alt=""
+      onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
+    >
+    <div class="banner-fallback"></div>
+  </div>
+
+  <h1>Служба поддержки</h1>
+
+  <div class="description">
+    Наша служба поддержки работает круглосуточно — свяжитесь любым удобным способом
+  </div>
+
+  <div class="section-title">Техническая поддержка</div>
+
+  <a class="card" href="LIVECHAT_URL_HERE" target="_blank" rel="noopener">
+    <div class="card-logo logo-chat">
+      <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1 9.5C1 5.634 4.358 2.5 8.5 2.5h4C16.642 2.5 20 5.634 20 9.5c0 3.866-3.358 7-7.5 7H7.1l-3.94 2.85c-.46.33-1.1 0-1.1-.57V16.1C1.03 14.96 1 9.5 1 9.5Z" fill="#fff"/>
+        <circle cx="7.2" cy="9.5" r="1.25" fill="#FF6B2C"/>
+        <circle cx="10.5" cy="9.5" r="1.25" fill="#FF6B2C"/>
+        <circle cx="13.8" cy="9.5" r="1.25" fill="#FF6B2C"/>
+      </svg>
+    </div>
+    <div class="card-title">Live чат</div>
+    <div class="arrow"></div>
+  </a>
+
+  <a class="card" href="TG_URL_HERE" target="_blank" rel="noopener">
+    <div class="card-logo logo-tg">
+      <svg width="21" height="21" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <path d="M54 118.6l126.3-48.7c5.8-2.3 10.9 1.4 9 10l-21.5 101.5c-1.6 7.3-5.9 9.1-11.9 5.7l-33-24.3-15.9 15.3c-1.8 1.8-3.3 3.3-6.7 3.3l2.4-34.2 62.3-56.3c2.7-2.4-.6-3.7-4.2-1.3l-77 48.5-33.2-10.4c-7.2-2.3-7.3-7.2 1.4-10.1z" fill="#fff"/>
+      </svg>
+    </div>
+    <div class="card-title">Написать в Telegram</div>
+    <div class="arrow"></div>
+  </a>
+
+  <a class="card mail" href="mailto:support@tonplay.support">
+    <div class="card-logo logo-mail">
+      <svg width="23" height="17.7" viewBox="0 0 52 40" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3.5 40h7V18.2L0 11.5v24.8C0 38.4 1.6 40 3.5 40z" fill="#4285F4"/>
+        <path d="M41.5 40h7c1.9 0 3.5-1.6 3.5-3.7V11.5l-10.5 6.7V40z" fill="#34A853"/>
+        <path d="M41.5 4.6V18.2L52 11.5V7.3c0-4.2-4.8-6.6-8.1-4.1l-2.4 1.4z" fill="#FBBC04"/>
+        <path d="M10.5 18.2V4.6L26 15.7 41.5 4.6v13.6L26 29.3 10.5 18.2z" fill="#EA4335"/>
+        <path d="M0 7.3v4.2l10.5 6.7V4.6L8.1 3.2C4.7.7 0 3.1 0 7.3z" fill="#C5221F"/>
+      </svg>
+    </div>
+    <div>
+      <div class="mail-title">Написать на почту</div>
+      <div class="mail-address">support@tonplay.support</div>
+    </div>
+    <div class="mail-icon" onclick="copyEmail(event, this)" title="Скопировать адрес">
+      <svg class="icon-copy" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="9" y="9" width="13" height="13" rx="2.5" stroke="#8d97a7" stroke-width="1.8"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="#8d97a7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg class="icon-check" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 13l4 4L19 7" stroke="#5fd68a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </a>
+</div>
+
+<div class="offtoast" id="offToast" role="alert" aria-live="assertive">
+  <div class="oi">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20Z" fill="#e5484d"/><rect x="11" y="10" width="2" height="6" rx="1" fill="#fff"/><rect x="11" y="18" width="2" height="2" rx="1" fill="#fff"/></svg>
+  </div>
+  <div class="ot">
+    <b id="offToastTitle">Способ недоступен</b>
+    <span id="offToastText">Сумма слишком мала для этого способа</span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+const AMOUNT = "5";
+const CURRENCY = "RUB";
+const DESCRIPTION = "Пополнение по инвойсу - 0";
+const FEE = 0.01;      // комиссия: 0.01 = 1% (0 = без комиссии)
+const FLAT_FEE = {};   // фикс. надбавка по валютам, например { RUB: 5 }; пусто = нет
+
+const q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+
+// id_payment: хвост ссылки (например /gsjm-kdks-lwlx-pbsz). Читается из адреса, хранится в памяти
+// и в sessionStorage (переживает перезагрузку вкладки) и уходит во все запросы к воркерам.
+const ID_PAYMENT_KEY = "id_payment";
+const ID_PAYMENT = (function(){
+  let tail = "";
+  try {
+    tail = decodeURIComponent(location.pathname).replace(/^\/+|\/+$/g, "");
+  } catch (e) {
+    tail = String(location.pathname || "").replace(/^\/+|\/+$/g, "");
+  }
+  if (/^index\.html?$/i.test(tail)) tail = "";
+  if (tail) {
+    try { sessionStorage.setItem(ID_PAYMENT_KEY, tail); } catch (e) {}
+    return tail;
+  }
+  try { return sessionStorage.getItem(ID_PAYMENT_KEY) || ""; } catch (e) { return ""; }
+})();
+
+const qAmt = parseFloat(String(q.get("amount") || "").replace(",", "."));
+const qCur = String(q.get("cur") || "").trim().toUpperCase();
+$("amt").textContent = (isFinite(qAmt) && qAmt > 0) ? String(qAmt) : AMOUNT;
+$("cur").textContent = /^[A-Z]{2,10}$/.test(qCur) ? qCur : CURRENCY;
+$("desc").textContent = q.get("desc") || DESCRIPTION;
+$("rAmt").textContent = $("amt").textContent + " " + $("cur").textContent;
+
+const sel = $("method"), go = $("go");
+const emailInp = $("email"), emailBox = $("emailBox"), psheet = $("psheet");
+const rsheet = $("rsheet"), csheet = $("csheet"), ssheet = $("ssheet"), wsheet = $("wsheet"), ksheet = $("ksheet");
+const WALLETS = ["CryptoBot", "xRocket"];
+let walletCoin = "";
+let walletPayUrl = "";
+const STATE_KEY = "pstate3:" + (q.get("invoice") || ID_PAYMENT || "");
+const STATE_TTL = 60 * 60 * 1000;
+const PAID_TTL = 24 * 60 * 60 * 1000;
+
+const WALLET_WORKER = "https://plata-api.dpl-payments.workers.dev";
+const WORKERS = {
+  "CryptoBot":  WALLET_WORKER,
+  "xRocket":    WALLET_WORKER,
+  "USDT TRC20": "https://usdt-trc20.YOUR-SUBDOMAIN.workers.dev",
+  "GRAM":       "https://gram-ton.YOUR-SUBDOMAIN.workers.dev",
+  "BTC":        "https://btc.YOUR-SUBDOMAIN.workers.dev",
+  "ETH":        "https://eth.YOUR-SUBDOMAIN.workers.dev",
+  "BNB":        "https://bnb.YOUR-SUBDOMAIN.workers.dev",
+  "TRX":        "https://trx.YOUR-SUBDOMAIN.workers.dev"
+};
+const ADDRESSES = {
+  "USDT TRC20": "TV816hfLU9PvMjB2YsWM45NPknZTqYjXGe",
+  "GRAM":       "UQAQ-6h6ZwynqiC-hvcmfKd-LpcPgpWMTHqxxWuIcUn2XY6W",
+  "BTC":        "bc1qgl99gdxn3gdxr3stn6fnpxe6p5ny4wepgdsdcm",
+  "ETH":        "0x75066f7012A3A4Cf5e7Fe6a680C85e20e2C71Ef0",
+  "BNB":        "0x75066f7012A3A4Cf5e7Fe6a680C85e20e2C71Ef0",
+  "TRX":        "TV816hfLU9PvMjB2YsWM45NPknZTqYjXGe"
+};
+
+// Минимальная сумма платежа в самой монете. Если сумма заказа меньше, способ затемняется и недоступен.
+const MIN_PAY = {
+  "TRX":        10,
+  "USDT TRC20": 1
+};
+const CHECK_EVERY = 10000;
+const SUCCESS_URL = "";
+const INVOICE = q.get("invoice") || "";
+let restoring = false;
+
+// Диагностика настроек при загрузке: показывает в консоли, что ещё не заполнено.
+(function configCheck(){
+  Object.keys(ADDRESSES).forEach(m => {
+    if (/ВСТАВЬТЕ|YOUR-/i.test(ADDRESSES[m] || "")) console.warn("[config] нет адреса для " + m + " -> заполните ADDRESSES");
+  });
+  Object.keys(WORKERS).forEach(m => {
+    if (/YOUR-SUBDOMAIN/.test(WORKERS[m] || "")) console.warn("[config] нет воркера проверки для " + m + " -> заполните WORKERS (автопроверка оплаты работать не будет)");
+  });
+})();
+
+function generateQR(text) {
+  const qrDiv = $("qr");
+  qrDiv.innerHTML = "";
+  if (!text) return;
+  try {
+    new QRCode(qrDiv, {
+      text: text,
+      width: 480,
+      height: 480,
+      colorDark: "#1a1a1a",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch (e) {
+    console.error("QR generation error:", e);
+    qrDiv.textContent = "QR error";
+  }
+}
+
+// Символ для расчёта курса на биржах (конвертер принимает TON)
+const coinSymbols = {
+  "BTC": "BTC",
+  "ETH": "ETH",
+  "BNB": "BNB",
+  "TRX": "TRX",
+  "USDT": "USDT",
+  "USDT TRC20": "USDT",
+  "GRAM": "TON",
+  "CryptoBot": null,
+  "xRocket": null
+};
+
+// Коды валют, которые принимают API кошельков.
+// Пользователю монета показывается как GRAM, но в инвойсах и курсах технически используется TON.
+// Воркер отвечает "wallet or asset not supported", если не совпало имя кошелька или код монеты,
+// поэтому перебираем варианты кода монеты и написания имени кошелька и запоминаем рабочую пару.
+const ASSET_CANDIDATES = {
+  "CryptoBot": { "GRAM": ["GRAM", "TON", "TONCOIN"] },
+  "xRocket":   { "GRAM": ["GRAM", "TONCOIN", "TON", "gram", "toncoin", "ton"] }
+};
+const WALLET_ALIASES = {
+  "CryptoBot": ["CryptoBot", "cryptobot"],
+  "xRocket":   ["xRocket", "xrocket", "XROCKET"]
+};
+const ASSET_KEY = "assetmap2:";
+const MAX_CREATE_TRIES = 14;
+
+// Список пар [имя кошелька, код монеты]: сначала сохранённая рабочая, потом стандартное имя со всеми кодами,
+// потом остальные написания имени кошелька.
+function createAttempts(method, coin) {
+  const assets = ((ASSET_CANDIDATES[method] || {})[coin] || [coin]).slice();
+  const aliases = (WALLET_ALIASES[method] || [method]).slice();
+  const out = [];
+  const seen = {};
+  function add(w, c) {
+    const k = w + "|" + c;
+    if (!seen[k]) { seen[k] = 1; out.push([w, c]); }
+  }
+  try {
+    const saved = localStorage.getItem(ASSET_KEY + method + ":" + coin);
+    if (saved && saved.indexOf("|") > 0) {
+      const parts = saved.split("|");
+      add(parts[0], parts[1]);
+    }
+  } catch (e) {}
+  assets.forEach(c => add(aliases[0], c));
+  aliases.slice(1).forEach(w => assets.forEach(c => add(w, c)));
+  return out.slice(0, MAX_CREATE_TRIES);
+}
+
+function rememberAsset(method, coin, wallet, code) {
+  try { localStorage.setItem(ASSET_KEY + method + ":" + coin, wallet + "|" + code); } catch (e) {}
+}
+
+function payTicker(method) {
+  if (WALLETS.includes(method)) return walletCoin;
+  return method.includes("USDT") ? "USDT" : method.split(" ")[0];
+}
+
+const COIN_DECIMALS = {
+  "BTC": 8,
+  "ETH": 18,
+  "BNB": 18,
+  "TRX": 6,
+  "USDT": 2,
+  "GRAM": 9,
+  "TON": 9
+};
+
+// API конвертера валют
+const CONVERTER_API = "https://crypto-converter.plata-cf.workers.dev";
+
+const RATE_TTL = 3 * 60 * 1000; // используется только для кэша уникальных сумм
+
+async function fetchJson(url, ms) {
+  const ctrl = new AbortController();
+  const tm = setTimeout(() => ctrl.abort(), ms || 6000);
+  try {
+    const r = await fetch(url, { headers: { "Accept": "application/json" }, signal: ctrl.signal });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
+  } finally {
+    clearTimeout(tm);
+  }
+}
+
+function fiatCode() {
+  const f = ($("cur").textContent || "").trim().toLowerCase();
+  return /^[a-z]{2,10}$/.test(f) ? f : "";
+}
+
+function workerReady(m) {
+  const u = WORKERS[m];
+  return !!u && !/YOUR-SUBDOMAIN/.test(u);
+}
+
+// Достаёт текст ошибки из ответа воркера ({"error":"..."} / {"message":"..."} / обычный текст).
+function extractServerMsg(text) {
+  const t = String(text || "");
+  try {
+    const d = JSON.parse(t);
+    if (d && typeof d === "object") {
+      const m = d.error || d.message || d.detail || d.title || "";
+      return typeof m === "string" ? m : JSON.stringify(m);
+    }
+  } catch (e) {}
+  return t.slice(0, 300);
+}
+
+async function postJson(url, body, ms) {
+  if (!url || /YOUR-SUBDOMAIN/.test(url)) throw new Error("Worker URL not set");
+  const ctrl = new AbortController();
+  const tm = setTimeout(() => ctrl.abort(), ms || 25000);
+  const t0 = Date.now();
+  try {
+    const payload = Object.assign({}, body, { id_payment: ID_PAYMENT });
+    console.log("[worker] POST", url, JSON.stringify(payload));
+    const r = await fetch(url, { method: "POST", body: JSON.stringify(payload), signal: ctrl.signal });
+    const t = await r.text();
+    console.log("[worker] HTTP " + r.status + " (" + (Date.now() - t0) + " ms)", String(t).slice(0, 400));
+    if (!r.ok) {
+      const err = new Error("HTTP " + r.status);
+      err.status = r.status;
+      err.serverMsg = extractServerMsg(t);
+      throw err;
+    }
+    try { return JSON.parse(t); } catch (e) { throw new Error("Bad JSON from worker"); }
+  } finally {
+    clearTimeout(tm);
+  }
+}
+
+function isYes(d) {
+  return !!d && d.paid === true;
+}
+
+// Создание инвойса в кошельке. Перебираем пары (имя кошелька, код монеты),
+// пока воркер не примет запрос. Другие ошибки (таймаут, сеть, 5xx без текста про кошелёк/монету) сразу прерывают перебор.
+async function walletCreate(method, coin, cryptoAmount) {
+  const attempts = createAttempts(method, coin);
+  let lastErr = null;
+  const failed = [];
+  for (let i = 0; i < attempts.length; i++) {
+    const wName = attempts[i][0], code = attempts[i][1];
+    try {
+      const d = await postJson(WORKERS[method], {
+        action: "create",
+        wallet: wName,
+        asset: code,
+        currency: code,
+        coin: code,
+        amount: String(cryptoAmount),
+        description: $("desc").textContent,
+        invoice: INVOICE,
+        email: emailInp.value.trim()
+      });
+      if (!d || !d.url) {
+        console.error("Worker response without url:", d);
+        throw new Error("No pay url in worker response");
+      }
+      rememberAsset(method, coin, wName, code);
+      if (failed.length) console.log("[create] сработала пара wallet=" + wName + " asset=" + code + " после неудач: " + failed.join(", "));
+      return { url: String(d.url), id: String(d.id || "") };
+    } catch (e) {
+      lastErr = e;
+      const msg = String((e && e.serverMsg) || (e && e.message) || "");
+      const isAbort = e && e.name === "AbortError";
+      const retry = !isAbort && i < attempts.length - 1 && /wallet|asset|currency|coin|not found|unsupported|not supported|invalid|unknown/i.test(msg);
+      failed.push(wName + "/" + code);
+      console.warn("[create] wallet=" + wName + " asset=" + code + " failed: " + msg + (retry ? " -> пробуем следующую пару" : ""));
+      if (!retry) {
+        if (failed.length > 1) console.error("[create] перебор остановлен, пробовали: " + failed.join(", "));
+        throw e;
+      }
+    }
+  }
+  console.error("[create] ни одна пара не подошла: " + failed.join(", ") + ". Проверьте, какие wallet/asset принимает воркер plata-api.");
+  throw lastErr || new Error("Create failed");
+}
+
+async function runCheck(info, ms) {
+  if (!info || info.checking || info.paid || !workerReady(info.method)) return false;
+  info.checking = true;
+  try {
+    let body;
+    if (WALLETS.includes(info.method)) {
+      if (!info.id) return false;
+      body = { action: "check", wallet: info.method, id: info.id };
+    } else {
+      if (!info.address || !info.amount) return false;
+      body = { address: info.address, amount: String(info.amount) };
+      if (info.method === "GRAM") body.memo = info.memo;
+    }
+    const d = await postJson(WORKERS[info.method], body, ms);
+    dbLogSet(d); // DBLOG
+    const paid = isYes(d);
+    if (paid && payInfo === info) onPaid(info);
+    return paid;
+  } catch (e) {
+    console.error("Check error:", (e && e.name) + ": " + (e && e.message));
+    dbLogSet(null, e); // DBLOG
+    return false;
+  } finally {
+    info.checking = false;
+  }
+}
+
+// DBLOG:START (временный лог записи в БД: удалить этот блок, строки dbLogSet(...) и блок в HTML)
+function dbLogSet(d, err) {
+  const el = $("dbLog");
+  let t;
+  if (err) t = "БД: ошибка запроса (" + ((err && (err.serverMsg || err.message)) || "?") + ")";
+  else if (!d) t = "БД: нет ответа";
+  else if (d.error) t = "БД: ошибка воркера: " + d.error;
+  else if (d.paid === true && Number(d.updated) === 1) t = "БД: записано, статус обновлён (updated: 1)";
+  else if (d.paid === true && Number(d.updated) === 0) t = "БД: НЕ записано, id_payment не найден (updated: 0)";
+  else if (d.paid === true) t = "БД: оплачено, но воркер не вернул updated";
+  else t = "БД: ещё не оплачено (updated: " + d.updated + ")";
+  console.log("[dblog]", t, d || err);
+  if (el) el.textContent = t;
+}
+// DBLOG:END
+
+let pollTimer = null;
+function stopPolling() { clearTimeout(pollTimer); pollTimer = null; }
+function startPolling(info) {
+  stopPolling();
+  if (!info || info.paid || !workerReady(info.method) || !WALLETS.includes(info.method)) return;
+  const tick = () => {
+    pollTimer = setTimeout(async () => {
+      if (payInfo !== info || stage === 0 || info.paid) return;
+      await runCheck(info);
+      if (payInfo === info && stage > 0 && !info.paid) tick();
+    }, CHECK_EVERY);
+  };
+  tick();
+}
+
+function onPaid(info) {
+  info.paid = true;
+  stopPolling();
+  saveState();
+  showPaid();
+  if (SUCCESS_URL) setTimeout(() => { location.href = SUCCESS_URL; }, 1500);
+}
+
+function showPaid() {
+  clearTimeout(payTimer);
+  clearTimeout(spinTimer);
+  stopPolling();
+  csheet.classList.remove("open");
+  rsheet.classList.remove("open");
+  wsheet.classList.remove("open");
+  psheet.classList.remove("open");
+  document.body.classList.add("lock");
+  shade.classList.add("open");
+  requestAnimationFrame(() => requestAnimationFrame(() => ksheet.classList.add("open")));
+}
+$("paidClose").onclick = () => {
+  ksheet.classList.remove("open");
+  shade.classList.remove("open");
+  setTimeout(() => { if (!isOpen && !sOpen) document.body.classList.remove("lock"); }, 650);
+};
+
+function prefetchRate() {
+  try {
+    const key = WALLETS.includes(sel.value) ? walletCoin : sel.value;
+    const sym = coinSymbols[key], fiat = fiatCode().toUpperCase();
+    if (sym && fiat) getRate(sym, fiat).catch(() => {});
+  } catch (e) {}
+}
+
+const JITTER_PPM = 5000;
+const MIN_SPAN = 5n;
+const UAMT_KEY = "uamt4:";
+
+function randBig(max){
+  if (max <= 1n) return 0n;
+  const buf = new Uint32Array(8);
+  if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(buf);
+  else for (let i = 0; i < 8; i++) buf[i] = Math.floor(Math.random() * 4294967296);
+  let n = 0n;
+  buf.forEach(v => { n = (n << 32n) | BigInt(v); });
+  return n % max;
+}
+
+function makeUniqueAmount(amount, dec){
+  const base = BigInt(amount.toFixed(dec).replace(".", ""));
+  let span = base * BigInt(JITTER_PPM) / 1000000n;
+  if (span < MIN_SPAN) span = MIN_SPAN;
+  let units = base + 1n + randBig(span);
+  const maxCut = Math.min(dec - 1, span.toString().length - 1);
+  const cut = Number(randBig(BigInt(maxCut) + 1n));
+  if (cut > 0) {
+    const p = 10n ** BigInt(cut);
+    units = ((units + p - 1n) / p) * p;
+  }
+  const shown = dec - cut;
+  const s = units.toString().padStart(dec + 1, "0");
+  const intPart = s.slice(0, s.length - dec);
+  const frac = s.slice(s.length - dec).slice(0, shown);
+  return intPart + "." + frac;
+}
+
+function uniqueAmountCached(method, fiat, amount, cryptoAmount, dec){
+  const key = UAMT_KEY + (q.get("invoice") || "") + ":" + method + ":" + fiat + ":" + amount;
+  try {
+    const d = JSON.parse(localStorage.getItem(key) || "null");
+    if (d && d.v && Date.now() - d.t < RATE_TTL) return d.v;
+  } catch (e) {}
+  const v = makeUniqueAmount(cryptoAmount, dec);
+  try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), v: v })); } catch (e) {}
+  return v;
+}
+
+const rateCache = {};
+function getRate(sym, fiat) {
+  const k = fiat + ">" + sym, c = rateCache[k];
+  if (c && Date.now() - c.t < 60000) return c.p;
+  const p = fetchRate(sym, fiat);
+  rateCache[k] = { t: Date.now(), p: p };
+  p.catch(() => { if (rateCache[k] && rateCache[k].p === p) delete rateCache[k]; });
+  return p;
+}
+
+// Воркер принимает только целую фиатную сумму, поэтому берём курс (rate) на большой целой сумме
+// и умножаем на точную сумму с комиссией на клиенте (без потери 1% и дробной части).
+async function fetchRate(sym, fiat) {
+  let lastErr = null;
+  for (const base of [100000, 1000]) {
+    const url = CONVERTER_API + "/convert?from=" + encodeURIComponent(fiat) + "&to=" + encodeURIComponent(sym) + "&amount=" + base;
+    const ctrl = new AbortController();
+    const tm = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      console.log("[convert] GET", url);
+      const r = await fetch(url, { headers: { "Accept": "application/json" }, signal: ctrl.signal });
+      const text = await r.text();
+      console.log("[convert] HTTP", r.status, text.slice(0, 300));
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const d = JSON.parse(text);
+      if (!d || d.ok !== true) throw new Error("converter not ok");
+      let rate = parseFloat(d.rate);
+      if (!(rate > 0)) rate = parseFloat(d.result) / base;
+      if (!isFinite(rate) || rate <= 0) throw new Error("bad rate");
+      return rate;
+    } catch (e) {
+      lastErr = e;
+      console.error("Converter error:", (e && e.name) + ": " + (e && e.message));
+    } finally {
+      clearTimeout(tm);
+    }
+  }
+  throw lastErr || new Error("rate failed");
+}
+
+async function convertToCrypto(amount, method) {
+  const rateKey = WALLETS.includes(method) ? walletCoin : method;
+  const sym = coinSymbols[rateKey];
+  const fiat = fiatCode().toUpperCase();
+  if (!sym || !fiat || !(amount > 0)) return null;
+
+  const total = amount + amount * FEE + (FLAT_FEE[fiat] || 0);
+  if (!(total > 0)) return null;
+
+  try {
+    const rate = await getRate(sym, fiat);
+    const cryptoAmount = total * rate;
+    if (!isFinite(cryptoAmount) || cryptoAmount <= 0) return null;
+
+    let dec = COIN_DECIMALS[sym] != null ? COIN_DECIMALS[sym] : 6;
+    if (WALLETS.includes(method)) {
+      dec = Math.min(dec, 8);
+      let v = cryptoAmount.toFixed(dec);
+      if (!(parseFloat(v) > 0)) v = (Math.ceil(cryptoAmount * Math.pow(10, dec)) / Math.pow(10, dec)).toFixed(dec);
+      return v;
+    }
+    if (sym === "USDT") dec = 6;
+    return uniqueAmountCached(method, fiat, amount, cryptoAmount, dec);
+  } catch (e) {
+    console.error("Conversion error:", (e && e.name) + ": " + (e && e.message));
+    return null;
+  }
+}
+
+function randStr(len, chars) {
+  let out = "";
+  const buf = new Uint32Array(len);
+  if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(buf);
+  else for (let i = 0; i < len; i++) buf[i] = Math.floor(Math.random() * 4294967296);
+  for (let i = 0; i < len; i++) out += chars[buf[i] % chars.length];
+  return out;
+}
+const genMemo = () => randStr(10, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789");
+
+function setMethodView(){
+  const mval = $("mval");
+  mval.textContent = "";
+  const tile = Array.from(document.querySelectorAll(".pane .tile[data-v]")).find(b => b.dataset.v === sel.value);
+  const pic = tile && tile.querySelector(".pic");
+  if (pic) {
+    const im = document.createElement("img");
+    im.className = "mlogo";
+    im.alt = "";
+    im.src = pic.getAttribute("src");
+    im.onerror = () => { im.style.display = "none"; };
+    mval.appendChild(im);
+  }
+  mval.appendChild(document.createTextNode(sel.value));
+  if (WALLETS.includes(sel.value) && walletCoin) {
+    const mc = document.createElement("span");
+    mc.className = "mcoin";
+    mc.textContent = "· " + walletCoin;
+    mval.appendChild(mc);
+  }
+}
+
+let payInfo = null;
+function saveState(){
+  if (restoring) return;
+  const s = {
+    email: emailInp.value,
+    method: sel.value || "",
+    coin: walletCoin,
+    sheet: isOpen,
+    csel: cOpen,
+    cwallet: cWallet,
+    support: sOpen,
+    stage: stage,
+    pay: (stage > 0 && payInfo) ? {
+      method: payInfo.method,
+      coin: payInfo.coin,
+      memo: payInfo.memo,
+      crypto: payInfo.crypto === undefined ? null : payInfo.crypto,
+      hasCrypto: !!payInfo.hasCrypto,
+      shown: !!payInfo.shown,
+      url: payInfo.url || "",
+      id: payInfo.id || "",
+      paid: !!payInfo.paid
+    } : null,
+    t: Date.now()
+  };
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(s)); } catch (e) {}
+}
+function loadState(){
+  try {
+    const d = JSON.parse(localStorage.getItem(STATE_KEY) || "null");
+    if (!d || typeof d !== "object") return null;
+    const ttl = (d.pay && d.pay.paid) ? PAID_TTL : STATE_TTL;
+    if (!d.t || Date.now() - d.t > ttl) return null;
+    return d;
+  } catch (e) { return null; }
+}
+
+sel.onchange = () => { setMethodView(); go.disabled = false; prefetchRate(); saveState(); };
+
+const mailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+emailInp.addEventListener("input", () => emailBox.classList.remove("err"));
+emailInp.addEventListener("input", () => saveState());
+emailInp.addEventListener("change", () => saveState());
+
+let stage = 0, payTimer = null, unlockTimer = null, spinTimer = null, hideTimer = null, checkMsgTimer = null;
+
+async function openPay(resume){
+  stage = 1;
+  clearTimeout(unlockTimer);
+  clearTimeout(hideTimer);
+  rsheet.classList.remove("show");
+  document.body.classList.add("lock");
+  shade.classList.add("open");
+  const skipDots = !!(resume && resume.skipDots);
+  if (!skipDots) requestAnimationFrame(() => requestAnimationFrame(() => psheet.classList.add("open")));
+
+  const method = sel.value;
+  const isGram = method === "GRAM";
+  const info = {
+    method: method,
+    coin: walletCoin,
+    memo: isGram ? ((resume && resume.memo) || genMemo()) : "",
+    crypto: undefined,
+    hasCrypto: false,
+    shown: false,
+    url: (resume && resume.url) || "",
+    id: (resume && resume.id) || "",
+    paid: !!(resume && resume.paid),
+    address: "",
+    amount: "",
+    checking: false
+  };
+  payInfo = info;
+  stopPolling();
+  $("ptext").textContent = "Создание инвойса...";
+  saveState();
+
+  if (WALLETS.includes(method)) {
+    const walletFiat = parseFloat($("amt").textContent) || 0;
+    const createPromise = info.url
+      ? Promise.resolve({ url: info.url, id: info.id })
+      : convertToCrypto(walletFiat, method).then(c => {
+          if (!c) throw new Error("No crypto amount");
+          return walletCreate(method, walletCoin, c);
+        });
+    clearTimeout(payTimer);
+    const walletWait = new Promise(res => { payTimer = setTimeout(res, skipDots ? 0 : 3500); });
+    Promise.all([walletWait, createPromise]).then(res => {
+      if (payInfo !== info || stage < 1) return;
+      info.url = res[1].url;
+      info.id = res[1].id;
+      walletPayUrl = info.url;
+      stage = 2;
+      psheet.classList.remove("open");
+      wsheet.classList.add("open");
+      if (resume && resume.confirm) openConfirm();
+      saveState();
+      startPolling(info);
+    }).catch(err => {
+      if (payInfo !== info || stage === 0) return;
+      console.error("Create error:", (err && err.name) + ": " + (err && err.message) + (err && err.serverMsg ? " | " + err.serverMsg : ""));
+      const en = err && err.name, em = err && err.message;
+      $("ptext").textContent = en === "AbortError" ? "Сервис оплаты не отвечает"
+        : em === "No crypto amount" ? "Не удалось получить курс"
+        : "Не удалось создать инвойс";
+      clearTimeout(payTimer);
+      payTimer = setTimeout(cancelPay, 2600);
+    });
+    return;
+  }
+
+  const fiatAmount = parseFloat($("amt").textContent) || 0;
+  const payData = ADDRESSES[method] || "";
+  const addrOk = !!payData && !/ВСТАВЬТЕ|YOUR-/i.test(payData);
+
+  $("rAmt").textContent = "—";
+  const convPromise = (resume && resume.hasCrypto && resume.crypto)
+    ? Promise.resolve(resume.crypto)
+    : (addrOk ? convertToCrypto(fiatAmount, method).catch(() => null) : Promise.resolve(null));
+
+  info.address = payData;
+  $("rAddr").textContent = payData;
+  $("rAddrLbl").textContent = "Адрес";
+  $("cpAddr").setAttribute("aria-label", "Скопировать адрес");
+  $("qrcap").textContent = "Отсканируйте QR-код в приложении кошелька или скопируйте адрес";
+  $("memoWrap").style.display = isGram ? "" : "none";
+  $("rMemo").textContent = isGram ? info.memo : "—";
+  rsheet.classList.remove("tight");
+  rsheet.classList.toggle("gram", isGram);
+
+  clearTimeout(payTimer);
+  const dotsWait = new Promise(res => { payTimer = setTimeout(res, skipDots ? 0 : 3500); });
+  Promise.all([dotsWait, convPromise]).then(res => {
+    if (payInfo !== info || stage < 1) return;
+    const cryptoAmt = res[1];
+    if (!cryptoAmt) {
+      if (!addrOk) console.error("Адрес для " + method + " не задан: впишите его в ADDRESSES");
+      $("ptext").textContent = addrOk ? "Не удалось получить курс" : "Способ временно недоступен";
+      psheet.classList.add("open");
+      clearTimeout(payTimer);
+      payTimer = setTimeout(cancelPay, 1800);
+      return;
+    }
+    info.crypto = cryptoAmt;
+    info.hasCrypto = true;
+    stage = 2;
+    psheet.classList.remove("open");
+    rsheet.classList.add("open");
+    const instant = !!(resume && resume.instant);
+    if (!instant) rsheet.classList.add("load");
+    clearTimeout(spinTimer);
+    const minWait = new Promise(r2 => { spinTimer = setTimeout(r2, instant ? 0 : 1000); });
+    if (resume && resume.confirm) openConfirm();
+    saveState();
+    minWait.then(() => {
+      if (payInfo !== info || stage < 2) return;
+      $("rAmt").textContent = cryptoAmt + " " + payTicker(method);
+      rsheet.classList.remove("load");
+      rsheet.classList.add("show");
+      generateQR(payData);
+      info.shown = true;
+      info.amount = String(cryptoAmt);
+      saveState();
+      startPolling(info);
+    });
+  });
+}
+
+function openConfirm(){
+  if (stage !== 2 || (payInfo && payInfo.paid)) return;
+  stage = 3;
+  csheet.classList.add("open");
+  saveState();
+}
+
+function closeConfirm(){
+  if (stage !== 3) return;
+  stage = 2;
+  csheet.classList.remove("open");
+  saveState();
+}
+
+function cancelPay(){
+  stage = 0;
+  payInfo = null;
+  stopPolling();
+  saveState();
+  clearTimeout(payTimer);
+  clearTimeout(spinTimer);
+  csheet.classList.remove("open");
+  rsheet.classList.remove("open");
+  rsheet.classList.remove("load");
+  wsheet.classList.remove("open");
+  psheet.classList.remove("open");
+  shade.classList.remove("open");
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => { if (stage === 0) rsheet.classList.remove("show"); }, 700);
+  unlockTimer = setTimeout(() => { if (!isOpen && !sOpen && stage === 0) document.body.classList.remove("lock"); }, 650);
+  go.disabled = false;
+}
+
+$("cancelYes").onclick = cancelPay;
+$("cancelNo").onclick = closeConfirm;
+
+go.onclick = async () => {
+  const mail = emailInp.value.trim();
+  if (!mailRe.test(mail)) {
+    emailBox.classList.add("err");
+    emailInp.focus();
+    return;
+  }
+  emailBox.classList.remove("err");
+  if (WALLETS.includes(sel.value) && !walletCoin) { openSheet(); openCsel(sel.value); return; }
+  if (belowMin(sel.value)) { openSheet(); return; }
+  go.disabled = true;
+  emailInp.blur();
+  openPay();
+};
+
+function copyText(text){
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  }
+  fallbackCopy(text);
+  return Promise.resolve();
+}
+function fallbackCopy(text){
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+}
+function bindCopy(btnId, getText){
+  const btn = $(btnId);
+  let t = null;
+  btn.onclick = () => {
+    const txt = getText();
+    if (!txt || txt === "—") return;
+    copyText(txt);
+    btn.classList.add("done");
+    clearTimeout(t);
+    t = setTimeout(() => btn.classList.remove("done"), 1300);
+  };
+}
+bindCopy("cpAmt", () => $("rAmt").textContent.trim().split(" ")[0]);
+bindCopy("cpAddr", () => $("rAddr").textContent.trim());
+bindCopy("cpMemo", () => $("rMemo").textContent.trim());
+
+// Открытие ссылки на оплату в кошельке.
+// Сначала новая вкладка; если браузер её заблокировал — переход в этой же вкладке.
+function openWalletLink(url){
+  if (!url) {
+    console.error("Wallet pay url is empty");
+    return;
+  }
+  let w = null;
+  try { w = window.open(url, "_blank"); } catch (e) { w = null; }
+  if (w) {
+    try { w.opener = null; } catch (e) {}
+    return;
+  }
+  location.href = url;
+}
+
+$("walGo").onclick = () => {
+  openWalletLink(walletPayUrl || (payInfo && payInfo.url) || "");
+};
+const MANUAL_TRIES = 3;     // сколько запросов делаем по кнопке
+const MANUAL_SLOT = 3000;   // длительность одной проверки, мс (3 x 3 c = 9 c)
+let manualBusy = false;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+$("payCheck").onclick = async () => {
+  const info = payInfo;
+  if (!info || stage < 2 || info.paid || manualBusy) return;
+  const b = $("payCheck");
+  if (!workerReady(info.method)) {
+    b.textContent = "Проверка не настроена";
+    clearTimeout(checkMsgTimer);
+    checkMsgTimer = setTimeout(() => { b.textContent = "Проверить оплату"; }, 2500);
+    return;
+  }
+  manualBusy = true;
+  b.disabled = true;
+  clearTimeout(payTimer);
+  $("ptext").textContent = "Проверка платежа";
+  psheet.classList.add("open");
+
+  let found = false;
+  for (let i = 0; i < MANUAL_TRIES; i++) {
+    const t0 = Date.now();
+    found = await runCheck(info, MANUAL_SLOT);
+    if (found || info.paid) { found = true; break; }
+    if (payInfo !== info || stage === 0) break;
+    const left = MANUAL_SLOT - (Date.now() - t0);
+    if (left > 0) await sleep(left);
+    if (payInfo !== info || stage === 0) break;
+  }
+
+  manualBusy = false;
+  b.disabled = false;
+  if (found || info.paid) return;           // оплата найдена: showPaid() сам закрыл панель
+  if (payInfo !== info || stage === 0) return;
+
+  $("ptext").textContent = "Транзакция не найдена";
+  clearTimeout(payTimer);
+  payTimer = setTimeout(() => {
+    if (payInfo === info && !info.paid) psheet.classList.remove("open");
+  }, 2000);
+};
+
+const sheet = $("sheet"), shade = $("shade"), grab = $("grab"), pane = $("pane");
+const tiles = Array.from(pane.querySelectorAll(".tile[data-v]"));
+let isOpen = false, closeTimer = null, loadTimer = null;
+
+const offToast = $("offToast");
+let offToastTimer = null;
+
+// Красивое уведомление над шторкой со способами оплаты.
+function showOffToast(tile){
+  const method = tile.dataset.v;
+  const min = MIN_PAY[method];
+  $("offToastTitle").textContent = "Способ недоступен";
+  $("offToastText").textContent = min
+    ? "Сумма слишком мала. Минимум: " + min + " " + payTicker(method)
+    : "Этот способ не подходит для текущей суммы";
+  const sr = sheet.getBoundingClientRect();
+  offToast.style.bottom = Math.max(8, window.innerHeight - sr.top + 10) + "px";
+  offToast.classList.remove("show");
+  void offToast.offsetWidth;
+  offToast.classList.add("show");
+  clearTimeout(offToastTimer);
+  offToastTimer = setTimeout(hideOffToast, 2800);
+}
+function hideOffToast(){
+  clearTimeout(offToastTimer);
+  offToast.classList.remove("show");
+}
+
+function mark(){
+  tiles.forEach(b => b.classList.toggle("on", b.dataset.v === sel.value));
+}
+
+// Затемняет способы, у которых сумма платежа в монете меньше минимальной (MIN_PAY).
+function belowMin(method) {
+  const t = tiles.find(b => b.dataset.v === method);
+  return !!(t && t.classList.contains("off"));
+}
+
+async function updateMins() {
+  const amount = parseFloat($("amt").textContent) || 0;
+  const fiat = fiatCode().toUpperCase();
+  if (!(amount > 0) || !fiat) return;
+  const total = amount + amount * FEE + (FLAT_FEE[fiat] || 0);
+  for (const method of Object.keys(MIN_PAY)) {
+    const t = tiles.find(b => b.dataset.v === method);
+    const sym = coinSymbols[method];
+    if (!t || !sym) continue;
+    try {
+      const rate = await getRate(sym, fiat);
+      const off = total * rate < MIN_PAY[method];
+      t.classList.toggle("off", off);
+      if (off) t.setAttribute("aria-disabled", "true"); else t.removeAttribute("aria-disabled");
+    } catch (e) {
+      console.error("Min check error:", method, (e && e.message));
+    }
+  }
+}
+updateMins();
+
+function openSheet(){
+  if (isOpen) return;
+  isOpen = true;
+  updateMins();
+  saveState();
+  clearTimeout(closeTimer);
+  clearTimeout(loadTimer);
+  mark();
+  pane.scrollTop = 0;
+  sheet.classList.remove("ready");
+  sheet.style.transform = "";
+  shade.style.opacity = "";
+  document.body.classList.add("lock");
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    shade.classList.add("open");
+    sheet.classList.add("open");
+  }));
+  loadTimer = setTimeout(() => sheet.classList.add("ready"), 120);
+}
+
+function closeSheet(){
+  if (!isOpen) return;
+  isOpen = false;
+  saveState();
+  hideOffToast();
+  clearTimeout(loadTimer);
+  sheet.classList.remove("drag");
+  sheet.style.transform = "";
+  shade.style.opacity = "";
+  shade.classList.remove("open");
+  sheet.classList.remove("open");
+  closeTimer = setTimeout(() => {
+    if (!sOpen) document.body.classList.remove("lock");
+    sheet.classList.remove("ready");
+  }, 650);
+  $("open").focus({preventScroll:true});
+}
+
+$("open").onclick = openSheet;
+
+let sOpen = false, sCloseTimer = null;
+
+function openSupport(){
+  if (sOpen) return;
+  sOpen = true;
+  saveState();
+  clearTimeout(sCloseTimer);
+  ssheet.scrollTop = 0;
+  ssheet.style.transform = "";
+  shade.style.opacity = "";
+  document.body.classList.add("lock");
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    shade.classList.add("open");
+    ssheet.classList.add("open");
+  }));
+}
+
+function closeSupport(){
+  if (!sOpen) return;
+  sOpen = false;
+  saveState();
+  ssheet.classList.remove("open");
+  shade.classList.remove("open");
+  sCloseTimer = setTimeout(() => {
+    if (!isOpen) document.body.classList.remove("lock");
+  }, 650);
+}
+
+$("openSupport").onclick = openSupport;
+
+function copyEmail(e, el){
+  e.preventDefault();
+  e.stopPropagation();
+  var email = 'support@tonplay.support';
+  function done(){
+    el.classList.add('copied');
+    setTimeout(function(){ el.classList.remove('copied'); }, 1500);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(email).then(done).catch(done);
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = email;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(err){}
+    document.body.removeChild(ta);
+    done();
+  }
+}
+
+shade.onclick = () => {
+  if (sOpen) { closeSupport(); return; }
+  if (cOpen) { closeCsel(); return; }
+  if (payInfo && payInfo.paid) return;
+  if (stage === 2) { openConfirm(); return; }
+  if (stage === 3) { closeConfirm(); return; }
+  if (stage === 1) { cancelPay(); return; }
+  closeSheet();
+};
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (sOpen) { closeSupport(); return; }
+  if (cOpen) { closeCsel(); return; }
+  if (payInfo && payInfo.paid) return;
+  if (stage === 2) { openConfirm(); return; }
+  if (stage === 3) { closeConfirm(); return; }
+  if (stage === 1) { cancelPay(); return; }
+  closeSheet();
+});
+
+tiles.forEach(b => b.onclick = () => {
+  if (b.classList.contains("off")) { showOffToast(b); return; }
+  if (WALLETS.includes(b.dataset.v)) { openCsel(b.dataset.v); return; }
+  walletCoin = "";
+  sel.value = b.dataset.v;
+  sel.onchange();
+  mark();
+  setTimeout(closeSheet, 380);
+});
+
+let startY = 0, dy = 0, dragging = false;
+grab.addEventListener("pointerdown", e => {
+  dragging = true; startY = e.clientY; dy = 0;
+  sheet.classList.add("drag");
+  grab.setPointerCapture(e.pointerId);
+});
+grab.addEventListener("pointermove", e => {
+  if (!dragging) return;
+  dy = Math.max(0, e.clientY - startY);
+  sheet.style.transform = "translate3d(0," + dy + "px,0)";
+  shade.style.opacity = String(Math.max(0, 1 - dy / sheet.offsetHeight));
+});
+function endDrag(){
+  if (!dragging) return;
+  dragging = false;
+  sheet.classList.remove("drag");
+  if (dy > sheet.offsetHeight * 0.25) { closeSheet(); }
+  else { sheet.style.transform = ""; shade.style.opacity = ""; }
+}
+grab.addEventListener("pointerup", endDrag);
+grab.addEventListener("pointercancel", endDrag);
+
+const csel = $("csel"), cgrab = $("cgrab"), cpane = $("cpane");
+const ctiles = Array.from(cpane.querySelectorAll(".tile[data-c]"));
+let cOpen = false, cWallet = "", cReadyTimer = null, cCloseTimer = null;
+
+function markCoin(){
+  ctiles.forEach(b => b.classList.toggle("on", sel.value === cWallet && walletCoin === b.dataset.c));
+}
+
+function openCsel(wallet){
+  if (cOpen) return;
+  cOpen = true;
+  cWallet = wallet;
+  saveState();
+  clearTimeout(cReadyTimer);
+  clearTimeout(cCloseTimer);
+  $("cwallet").textContent = wallet;
+  markCoin();
+  cpane.scrollTop = 0;
+  csel.classList.remove("ready");
+  csel.style.transform = "";
+  requestAnimationFrame(() => requestAnimationFrame(() => csel.classList.add("open")));
+  cReadyTimer = setTimeout(() => csel.classList.add("ready"), 120);
+}
+
+function closeCsel(){
+  if (!cOpen) return;
+  cOpen = false;
+  saveState();
+  clearTimeout(cReadyTimer);
+  csel.classList.remove("drag");
+  csel.style.transform = "";
+  csel.classList.remove("open");
+  cCloseTimer = setTimeout(() => csel.classList.remove("ready"), 650);
+}
+
+ctiles.forEach(b => b.onclick = () => {
+  walletCoin = b.dataset.c;
+  sel.value = cWallet;
+  sel.onchange();
+  mark();
+  markCoin();
+  setTimeout(() => { closeCsel(); closeSheet(); }, 380);
+});
+
+let cStartY = 0, cDy = 0, cDragging = false;
+cgrab.addEventListener("pointerdown", e => {
+  cDragging = true; cStartY = e.clientY; cDy = 0;
+  csel.classList.add("drag");
+  cgrab.setPointerCapture(e.pointerId);
+});
+cgrab.addEventListener("pointermove", e => {
+  if (!cDragging) return;
+  cDy = Math.max(0, e.clientY - cStartY);
+  csel.style.transform = "translate3d(0," + cDy + "px,0)";
+});
+function endCDrag(){
+  if (!cDragging) return;
+  cDragging = false;
+  csel.classList.remove("drag");
+  if (cDy > csel.offsetHeight * 0.25) { closeCsel(); }
+  else { csel.style.transform = ""; }
+}
+cgrab.addEventListener("pointerup", endCDrag);
+cgrab.addEventListener("pointercancel", endCDrag);
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && payInfo && WALLETS.includes(payInfo.method) && stage >= 2 && !payInfo.paid) runCheck(payInfo);
+});
+
+function restoreState(){
+  const st = loadState();
+  if (!st) return;
+  restoring = true;
+  try {
+    if (typeof st.email === "string") emailInp.value = st.email;
+    if (st.method && Array.from(sel.options).some(o => o.value === st.method)) {
+      walletCoin = st.coin || "";
+      sel.value = st.method;
+      setMethodView();
+      go.disabled = false;
+      mark();
+      prefetchRate();
+    }
+  } catch (e) {}
+  restoring = false;
+
+  try {
+    const p = st.pay;
+    const okMethod = !!(p && p.method && Array.from(sel.options).some(o => o.value === p.method));
+    if (st.stage > 0 && okMethod && p.paid) {
+      walletCoin = p.coin || "";
+      sel.value = p.method;
+      setMethodView();
+      mark();
+      go.disabled = true;
+      stage = 2;
+      payInfo = { method: p.method, coin: walletCoin, memo: p.memo || "", crypto: p.crypto, hasCrypto: !!p.hasCrypto, shown: true, url: p.url || "", id: p.id || "", paid: true, address: "", amount: "", checking: false };
+      showPaid();
+    } else if (st.stage > 0 && okMethod) {
+      walletCoin = p.coin || "";
+      sel.value = p.method;
+      setMethodView();
+      mark();
+      go.disabled = true;
+      const deep = st.stage >= 2;
+      openPay({
+        memo: p.memo,
+        hasCrypto: p.hasCrypto,
+        crypto: p.crypto,
+        url: p.url,
+        id: p.id,
+        paid: p.paid,
+        skipDots: deep,
+        instant: deep,
+        confirm: st.stage === 3
+      });
+    } else {
+      if (st.sheet) openSheet();
+      if (st.csel && WALLETS.includes(st.cwallet)) openCsel(st.cwallet);
+      if (st.support) openSupport();
+    }
+  } catch (e) {}
+  saveState();
+}
+
+// INVOICE-LOAD: при загрузке страницы берём хвост ссылки и запрашиваем счёт у воркера,
+// подставляем сумму и описание, после этого разблокируем форму и восстанавливаем состояние оплаты.
+const INVOICE_API = "https://invoice-api.bratiah571.workers.dev";
+let INVOICE_DATA = null;
+
+async function loadInvoice() {
+  if (!ID_PAYMENT) throw new Error("В ссылке нет id счёта");
+  const ctrl = new AbortController();
+  const tm = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const body = { id: ID_PAYMENT };
+    console.log("[invoice] POST", INVOICE_API, JSON.stringify(body));
+    const r = await fetch(INVOICE_API, { method: "POST", body: JSON.stringify(body), signal: ctrl.signal });
+    const t = await r.text();
+    console.log("[invoice] HTTP " + r.status, String(t).slice(0, 400));
+    let d = null;
+    try { d = JSON.parse(t); } catch (e) {}
+    if (!r.ok || !d || d.ok !== true || !d.invoice) {
+      throw new Error((d && d.error) ? String(d.error) : ("Счёт не найден (HTTP " + r.status + ")"));
+    }
+    const inv = d.invoice;
+    const amtStr = String(inv.amount == null ? "" : inv.amount).trim().replace(",", ".");
+    const amtNum = parseFloat(amtStr);
+    if (!isFinite(amtNum) || amtNum <= 0) throw new Error("Некорректная сумма счёта");
+    INVOICE_DATA = inv;
+    $("amt").textContent = amtStr;
+    if (typeof inv.currency === "string" && /^[A-Za-z]{2,10}$/.test(inv.currency.trim())) $("cur").textContent = inv.currency.trim().toUpperCase();
+    $("desc").textContent = (typeof inv.description === "string" && inv.description.trim()) ? inv.description.trim() : DESCRIPTION;
+    $("rAmt").textContent = $("amt").textContent + " " + $("cur").textContent;
+    console.log("[invoice] status:", inv.status);
+  } finally {
+    clearTimeout(tm);
+  }
+}
+
+loadInvoice().then(() => {
+  document.body.classList.remove("inv-loading", "inv-lock");
+  restoreState();
+}, e => {
+  console.error("[invoice] error:", (e && e.message) || e);
+  document.body.classList.remove("inv-loading");
+  document.body.classList.add("inv-err");
+  $("amt").textContent = "—";
+  $("desc").textContent = "Не удалось загрузить счёт" + ((e && e.message) ? " (" + e.message + ")" : "");
+});
+</script>
+</body>
+</html>
